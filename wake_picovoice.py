@@ -1,20 +1,23 @@
 import pvporcupine
-import pyaudio  # ตรวจสอบให้แน่ใจว่าติดตั้งแล้ว
+import pyaudio
 import struct
 import sys
+import os # เพิ่ม import os เพื่อช่วยในการระบุ path
 
 # แทนที่ด้วย AccessKey ของคุณจาก Picovoice Console
 PICOVOICE_ACCESS_KEY = "8QZmFYrFufntomOJGZmf8nSm5BXB+4csXK98vqSdLJ37RZNR7RQc2w=="
 
-# ตัวอย่างการใช้โมเดลสำเร็จรูป (ภาษาอังกฤษ)
-# KEYWORDS_TO_USE ต้องเป็น list ของชื่อ keyword ที่ตรงกับใน pvporcupine.KEYWORDS
-# เลือกจากที่คุณเห็น: 'picovoice', 'hey google', 'alexa', 'jarvis', ฯลฯ
-KEYWORDS_TO_USE = ['jarvis'] # คุณอาจจะลองเปลี่ยนเป็น ['hey google'] หรือ ['alexa'] ก็ได้
-KEYWORD_LABELS = KEYWORDS_TO_USE # ใช้ชื่อเดียวกันกับ keyword_to_use เพื่อแสดงผล
+# --- การกำหนดค่าสำหรับ Custom Model ---
+# ตั้งค่าชื่อไฟล์ .ppn ของคุณ
+CUSTOM_MODEL_FILENAME = "models/jarvis_en_windows_v3_0_0.ppn"
+# สร้าง full path ไปยังไฟล์ .ppn
+# os.path.join จะช่วยให้ path ทำงานได้ทั้งบน Windows, macOS, Linux
+PATH_TO_CUSTOM_JARVIS_MODEL = os.path.join(os.path.dirname(__file__), CUSTOM_MODEL_FILENAME)
 
+# Label สำหรับแสดงผลเมื่อตรวจพบ
+KEYWORD_LABELS = ['Jarvis (Custom)']
 
-def main():
-    print("กำลังเริ่มต้น Porcupine Wake Word Detector...")
+def listen_for_wake_word(detect_and_exit=False):
     print(f"กำลังฟังคำสั่ง: {', '.join(KEYWORD_LABELS)}")
 
     porcupine = None
@@ -22,10 +25,12 @@ def main():
     audio_stream = None
 
     try:
-        # ใช้ keywords argument ตรงๆ ตามที่เอกสารและผลลัพธ์ KEYWORDS ของคุณบอก
+        # ใช้ keyword_paths แทน keywords เพื่อชี้ไปยังไฟล์ .ppn ของคุณ
+        # sensitivities สามารถปรับได้เช่นกัน (ต้องเป็น list ที่มีขนาดเท่ากับ keyword_paths)
         porcupine = pvporcupine.create(
             access_key=PICOVOICE_ACCESS_KEY,
-            keywords=KEYWORDS_TO_USE
+            keyword_paths=[PATH_TO_CUSTOM_JARVIS_MODEL], # ใช้ list เพราะอาจมีหลาย keyword
+            sensitivities=[0.6] # ลองปรับค่านี้ดู ถ้า 1.0 ยังไม่พอใจ (0.0-1.0)
         )
 
         pa = pyaudio.PyAudio()
@@ -47,13 +52,11 @@ def main():
 
             if result >= 0:
                 print(f"!!! ตรวจพบคำสั่ง: {KEYWORD_LABELS[result]} !!!")
-                # ตรงนี้คุณสามารถเพิ่มโค้ดสำหรับการตอบสนองเมื่อตรวจพบ Wake Word
-                # เช่น เรียกใช้ Whisper AI หรือทำอย่างอื่น
+                print("--- พร้อมรับคำสั่งหลัก ---") # เพิ่มข้อความนี้
+                return True  # คืนค่า True เมื่อตรวจพบ Wake Word
 
     except pvporcupine.PorcupineInvalidArgumentError as e:
         print(f"Error: Invalid argument passed to Porcupine. {e}")
-        print("Please ensure your AccessKey is correct and valid, and keywords are correct.")
-        print(f"Available keywords: {pvporcupine.KEYWORDS}") # เพิ่มบรรทัดนี้เพื่อแสดง keywords ที่มี
     except Exception as e:
         print(f"เกิดข้อผิดพลาด: {e}")
     finally:
@@ -63,7 +66,6 @@ def main():
             audio_stream.close()
         if pa is not None:
             pa.terminate()
-        print("ปิดโปรแกรม Wake Word Detector")
 
 if __name__ == "__main__":
-    main()
+    detected = listen_for_wake_word(detect_and_exit=True)
