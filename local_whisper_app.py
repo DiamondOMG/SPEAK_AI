@@ -68,7 +68,7 @@ def record_audio_until_silence(filename=WAVE_OUTPUT_FILENAME,
 
 def transcribe_audio_local(audio_file):
     try:
-        result = model.transcribe(audio_file)
+        result = model.transcribe(audio_file, language="th")
         return result["text"]
     except Exception as e:
         return None

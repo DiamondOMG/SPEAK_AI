@@ -1,0 +1,336 @@
+{
+  "name": "Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=คำถาม\n{{ $json.body.text }}\n",
+        "options": {
+          "systemMessage": "=You are Jarvis, a helpful and friendly AI assistant. You are currently talking to guest.\n\nYour role is to:\n- Help answer user questions clearly and concisely.\n- Identify if the user shares any important or personal information worth remembering (e.g. preferences, interests, facts about them).\n- If so, extract and save it using the Save Memory tool.\n- Do NOT tell the user that you’re saving any memory.\n\nTools:\n- Save Memory: use this to store any useful info about the user (summarized, short).\n\nHere are the last saved memories from the user (with timestamps):\n{{ $json.memories.toJsonString() }}\n\n!! IMPORTANT !!\n- Don’t repeat saved information unless it helps your answer.\n- Be aware of dates — prefer the most recent info if memory seems outdated.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -60
+      ],
+      "id": "586065c4-6a5c-4f85-bc4f-09a2e0f3c69b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        160,
+        160
+      ],
+      "id": "822cf3ce-d1dc-4b9e-922f-62f92d93ef7d",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "VF8qtSrcHVVFDYmU",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0",
+          "mode": "list",
+          "cachedResultName": "n8n_database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -500,
+        15
+      ],
+      "id": "60eff785-7f63-4d78-bce8-8d3f9e84fe0a",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleApi": {
+          "id": "O3suY0kVRCG0ZZaK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "=memories",
+        "include": "specifiedFields",
+        "fieldsToInclude": "memory, user, date",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        15
+      ],
+      "id": "c7234e3c-68cd-4a03-a291-c36b8180b60c",
+      "name": "Aggregate",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -60,
+        -60
+      ],
+      "id": "b28e5577-d476-49d5-ba3c-a979b975d14e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0",
+          "mode": "list",
+          "cachedResultName": "n8n_database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lpkGFofbb1BPKmi0LCoiy_EfwM2nWlj6sS8yh5AlbZ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "memory": "={{ $fromAI('memory') }}",
+            "user": "guest",
+            "date": "={{ $today }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "memory",
+              "displayName": "memory",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user",
+              "displayName": "user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        460,
+        160
+      ],
+      "id": "972f33c5-6260-46e5-aecd-0bdb8311040f",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleApi": {
+          "id": "O3suY0kVRCG0ZZaK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c0342492-3ac5-42da-be4a-c6f06be38d6a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        -80
+      ],
+      "id": "6d82357e-5d95-444e-850e-bd18cd2effa5",
+      "name": "Webhook",
+      "webhookId": "c0342492-3ac5-42da-be4a-c6f06be38d6a"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "guest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        300,
+        220
+      ],
+      "id": "1f7d90b3-2535-45db-b73c-1df7bd069882",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"output\": {{ JSON.stringify($json.output) }}\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        -60
+      ],
+      "id": "b74970ec-bcd5-4755-9b8c-819e1b94292c",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "77443851-132b-49c9-bd8f-1a21f24632d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a871ec589127fab3f4fcdfc819a53cc71325d3bc46d753dc74f4ff2cc524f141"
+  },
+  "id": "MhgiGKpZ5vh68OVt",
+  "tags": []
+}

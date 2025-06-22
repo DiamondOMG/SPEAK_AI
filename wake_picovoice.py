@@ -20,7 +20,7 @@ def listen_for_wake_word(detect_and_exit=False):
         porcupine = pvporcupine.create(
             access_key=PICOVOICE_ACCESS_KEY,
             keyword_paths=[PATH_TO_CUSTOM_JARVIS_MODEL],
-            sensitivities=[0.6]
+            sensitivities=[0.5]
         )
 
         pa = pyaudio.PyAudio()
