@@ -9,6 +9,7 @@ def text_to_speech_gtts(text, lang='th', play_audio=True):
     try:
         tts = gTTS(text=text, lang=lang, slow=False)
         tts.save(AUDIO_OUTPUT_FILENAME)
+        print(f"Audio saved to {text} as {AUDIO_OUTPUT_FILENAME}")
         
         if play_audio:
             pygame.mixer.quit()
